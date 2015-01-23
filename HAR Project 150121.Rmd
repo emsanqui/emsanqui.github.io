@@ -1,0 +1,126 @@
+---
+title: "HAR Project"
+author: "Enrique Sanqui"
+date: "Wednesday, January 21, 2015"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+---
+
+# Overview
+This document outlines a methodology to use the Human Activity Recognition (HAR) data to predict one of six activities recorded by wearable accelerometers and shared in the "Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements" paper by Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. 
+
+
+# Approach
+
+## Data Preparation
+We removed identifiers for the experiment record, which did not add value to the classification problem.
+
+```{r echo=FALSE , message=FALSE}
+library(caret)
+library(nnet)
+```
+
+```{r echo=FALSE}
+#setwd("./Project")
+pml.dat <- read.csv("./Data/pml-training.csv")
+(remove.columns <- names(pml.dat[1:7]))
+```
+
+In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA's) were removed, as variability was too low to add any value.
+
+```{r}
+# GET LIST OF COLUMNS IN pml-training.csv EXCLUDING COLUMNS WITH >19000 NA VALUES AND SPACES
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+pml.dat.summary <- data.frame(summary(pml.dat))
+exclude.columns <- rbind( subset(pml.dat.summary , grepl("^:19([0-9]{3,})",trim(pml.dat.summary$Freq) ) , select="Var2") ,
+                          subset(pml.dat.summary , grepl("^NA's   :19([0-9]{3,})",trim(pml.dat.summary$Freq) ) , select="Var2") )
+(include.field <- names(pml.dat[,-c(exclude.columns$Var2,1:7)]))
+```
+
+
+## Partitioning the HAR Data
+We partitioned the data into __training__ and __testing__ data frames.  The model was selected using the __training__ data and we used the __testing__ data to estimate the Out Of Sample (OOS) Error. 
+
+```{r}
+# PARTITION DATA INTO TRAINING and TESTING ####
+set.seed(77777)
+i.train.test <- createDataPartition(pml.dat$classe , p=0.8 , list=FALSE)
+training <- pml.dat[i.train.test,include.field]
+testing <- pml.dat[-i.train.test,include.field]
+```
+
+
+## Model Selection
+
+To predict the correct activity we explored the use of different classification models with built in feature selections.  We then examined their accuracy and ROC.
+
+* rt - 99.85% Accuracy with mtry=2 and 99.93% with mtry=27 for the OOS Error
+* rpart - 50.38% Accuracy for the OOS Error
+* Boruta - model ran too long
+* AdaBoost - 28.26% Accuracy for the OOS Error
+
+Out of the tested models the Random Forest (__rf__) model returned the highest accuracy.  
+The __rf__ model was trained using a 10-fold cross-validation, which was repeated 10 times.  
+
+```{r , eval=FALSE}
+# FIT Random Forest ####
+my.grid <- expand.grid(mtry = c(2,27,52) )
+
+# http://topepo.github.io/caret/training.html#control
+fitControl <- trainControl(method = "repeatedcv", 
+                           number = 10,
+                           repeats = 10,
+                           verboseIter = T,
+                           p = 0.7
+)  
+
+# Traning Random Forest
+set.seed(77777)
+rf.mod <- train(x=training[,-dim(training)[2]] , y=as.factor(training$classe) ,
+                linout=FALSE , 
+                method="rf" , 
+                tuneGrid = my.grid ,
+                trControl = fitControl 
+)
+```
+
+```{r echo=FALSE , message=FALSE}
+# LOAD THE SAVED MODEL
+load("rf_mod_training_150120")
+```
+
+```{r echo=FALSE , fig.width=10 , fig.height=5}
+rf.mod
+
+trellis.par.set(caretTheme())
+plot(rf.mod)
+```
+
+
+Due to the amount of time it takes to train the model, we also save the trained __rf__ model. We are able to load it later using the __load()__ command.
+```{r eval=FALSE}
+# SAVE rf.mod TRAINING OBJECT
+save( rf.mod , file="rf_mod_training")
+```
+
+
+
+
+
+
+## Estimated Out Of Sample Error
+To get an estimate of the Out Of Sample Error, we used the __testing__ data frame partitioned earlier.
+```{r message=FALSE}
+# RANDOM FOREST CONFUSION MATRIX
+(confusionMatrix( predict(rf.mod, testing) , testing$classe ))
+```
+
+
+## Variable Importance
+As outlined earlier, the model also has built-in feature selection, which we extracted and plotted below.
+```{r fig.height=10 , fig.width=10 }
+plot(varImp(rf.mod, scale = FALSE))
+```
+
