@@ -1,6 +1,6 @@
 ---
 title: "HAR Project"
-author: "Enrique Sanqui"
+author: "Rick Sanqui"
 date: "Wednesday, January 21, 2015"
 output:
   html_document:
