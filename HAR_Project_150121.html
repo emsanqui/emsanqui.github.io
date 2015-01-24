@@ -79,7 +79,7 @@ img {
 <pre><code>## [1] &quot;X&quot;                    &quot;user_name&quot;            &quot;raw_timestamp_part_1&quot;
 ## [4] &quot;raw_timestamp_part_2&quot; &quot;cvtd_timestamp&quot;       &quot;new_window&quot;          
 ## [7] &quot;num_window&quot;</code></pre>
-<p>In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA’s) were removed, as variability was too low to add any value.</p>
+<p>In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA’s) were removed, as imputing them would add no value.</p>
 <pre class="r"><code># GET LIST OF COLUMNS IN pml-training.csv EXCLUDING COLUMNS WITH &gt;19000 NA VALUES AND SPACES
 trim &lt;- function (x) gsub(&quot;^\\s+|\\s+$&quot;, &quot;&quot;, x)
 pml.dat.summary &lt;- data.frame(summary(pml.dat))
@@ -104,6 +104,7 @@ exclude.columns &lt;- rbind( subset(pml.dat.summary , grepl(&quot;^:19([0-9]{3,}
 ## [46] &quot;gyros_forearm_z&quot;      &quot;accel_forearm_x&quot;      &quot;accel_forearm_y&quot;     
 ## [49] &quot;accel_forearm_z&quot;      &quot;magnet_forearm_x&quot;     &quot;magnet_forearm_y&quot;    
 ## [52] &quot;magnet_forearm_z&quot;     &quot;classe&quot;</code></pre>
+<p>After eliminating these columns we ended up with a data frame of 160 columns and 19622 rows.</p>
 </div>
 <div id="partitioning-the-har-data" class="section level2">
 <h2><span class="header-section-number">2.2</span> Partitioning the HAR Data</h2>
@@ -113,14 +114,15 @@ set.seed(77777)
 i.train.test &lt;- createDataPartition(pml.dat$classe , p=0.8 , list=FALSE)
 training &lt;- pml.dat[i.train.test,include.field]
 testing &lt;- pml.dat[-i.train.test,include.field]</code></pre>
+<p>The <strong>training</strong> data frame consists of 15699 rows. The <strong>testing</strong> data frame consists of 3923 rows.</p>
 </div>
 <div id="model-selection" class="section level2">
 <h2><span class="header-section-number">2.3</span> Model Selection</h2>
-<p>To predict the correct activity we explored the use of different classification models with built in feature selections. We then examined their accuracy and ROC.</p>
+<p>To predict the correct activity we explored the use of different classification models with built in feature selections. We then examined their accuracy.</p>
 <ul>
 <li>rt - 99.85% Accuracy with mtry=2 and 99.93% with mtry=27 for the OOS Error</li>
+<li>knn - 95% Accuracy with k=5 for the OOS Error</li>
 <li>rpart - 50.38% Accuracy for the OOS Error</li>
-<li>Boruta - model ran too long</li>
 <li>AdaBoost - 28.26% Accuracy for the OOS Error</li>
 </ul>
 <p>Out of the tested models the Random Forest (<strong>rf</strong>) model returned the highest accuracy.<br />The <strong>rf</strong> model was trained using a 10-fold cross-validation, which was repeated 10 times.</p>

@@ -28,7 +28,7 @@ pml.dat <- read.csv("./Data/pml-training.csv")
 (remove.columns <- names(pml.dat[1:7]))
 ```
 
-In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA's) were removed, as variability was too low to add any value.
+In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA's) were removed, as imputing them would add no value.
 
 ```{r}
 # GET LIST OF COLUMNS IN pml-training.csv EXCLUDING COLUMNS WITH >19000 NA VALUES AND SPACES
@@ -38,6 +38,8 @@ exclude.columns <- rbind( subset(pml.dat.summary , grepl("^:19([0-9]{3,})",trim(
                           subset(pml.dat.summary , grepl("^NA's   :19([0-9]{3,})",trim(pml.dat.summary$Freq) ) , select="Var2") )
 (include.field <- names(pml.dat[,-c(exclude.columns$Var2,1:7)]))
 ```
+
+After eliminating these columns we ended up with a data frame of `r dim(pml.dat)[2]` columns and `r dim(pml.dat)[1]` rows.
 
 
 ## Partitioning the HAR Data
@@ -51,14 +53,17 @@ training <- pml.dat[i.train.test,include.field]
 testing <- pml.dat[-i.train.test,include.field]
 ```
 
+The __training__ data frame consists of `r dim(training)[1]` rows.
+The __testing__ data frame consists of `r dim(testing)[1]` rows.
+
 
 ## Model Selection
 
-To predict the correct activity we explored the use of different classification models with built in feature selections.  We then examined their accuracy and ROC.
+To predict the correct activity we explored the use of different classification models with built in feature selections.  We then examined their accuracy.
 
 * rt - 99.85% Accuracy with mtry=2 and 99.93% with mtry=27 for the OOS Error
+* knn - 95% Accuracy with k=5 for the OOS Error
 * rpart - 50.38% Accuracy for the OOS Error
-* Boruta - model ran too long
 * AdaBoost - 28.26% Accuracy for the OOS Error
 
 Out of the tested models the Random Forest (__rf__) model returned the highest accuracy.  
