@@ -8,7 +8,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
-<meta name="author" content="Rick Sanqui" />
+<meta name="author" content="PML Student" />
 
 
 <title>HAR Project</title>
@@ -62,19 +62,26 @@ img {
 
 <div id="header">
 <h1 class="title">HAR Project</h1>
-<h4 class="author"><em>Rick Sanqui</em></h4>
+<h4 class="author"><em>PML Student</em></h4>
 <h4 class="date"><em>Wednesday, January 21, 2015</em></h4>
 </div>
 
 
-<div id="overview" class="section level1">
-<h1><span class="header-section-number">1</span> Overview</h1>
-<p>This document outlines a methodology to use the Human Activity Recognition (HAR) data to predict one of six activities recorded by wearable accelerometers and shared in the “Wearable Computing: Accelerometers’ Data Classification of Body Postures and Movements” paper by Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H.</p>
+<div id="introduction" class="section level1">
+<h1><span class="header-section-number">1</span> Introduction</h1>
+<p>In recent years, with the use of consumer products such as <em>Jawbone Up</em>, <em>Nike FuelBand</em>, and <em>Fitbit</em>, it has become easier for entusiasts to collect large quantities of personal movement data. However, data on the <em>quality of the movements</em>, how well excersices are performed, is rarely quantified.</p>
+<p>In this paper, we will use data collected from accelerometers on the belt, forearm, arm, and dumbell of six participants to predict the manner in which they performed barbell lift exercises (the <strong>classe</strong> variable in the data set). Participants in the experiment were asked to perform barbell lifts correctly and incorrectly in five different ways. More information is available from <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset).</p>
+<p>After the model was developed, it was used to predict on 20 activities. The feature data used to predict the 20 activities was obtained from <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a></p>
 </div>
 <div id="approach" class="section level1">
 <h1><span class="header-section-number">2</span> Approach</h1>
+<div id="data" class="section level2">
+<h2><span class="header-section-number">2.1</span> Data</h2>
+<p>The data used for this paper is the Human Activity Recognition (HAR) referenced in the “Wearable Computing: Accelerometers’ Data Classification of Body Postures and Movements” paper by Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H.</p>
+<p>The data was obtained from <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a></p>
+</div>
 <div id="data-preparation" class="section level2">
-<h2><span class="header-section-number">2.1</span> Data Preparation</h2>
+<h2><span class="header-section-number">2.2</span> Data Preparation</h2>
 <p>We removed identifiers for the experiment record, which did not add value to the classification problem.</p>
 <pre><code>## [1] &quot;X&quot;                    &quot;user_name&quot;            &quot;raw_timestamp_part_1&quot;
 ## [4] &quot;raw_timestamp_part_2&quot; &quot;cvtd_timestamp&quot;       &quot;new_window&quot;          
@@ -107,7 +114,7 @@ exclude.columns &lt;- rbind( subset(pml.dat.summary , grepl(&quot;^:19([0-9]{3,}
 <p>After eliminating these columns we ended up with a data frame of 160 columns and 19622 rows.</p>
 </div>
 <div id="partitioning-the-har-data" class="section level2">
-<h2><span class="header-section-number">2.2</span> Partitioning the HAR Data</h2>
+<h2><span class="header-section-number">2.3</span> Partitioning the HAR Data</h2>
 <p>We partitioned the data into <strong>training</strong> and <strong>testing</strong> data frames. The model was selected using the <strong>training</strong> data and we used the <strong>testing</strong> data to estimate the Out Of Sample (OOS) Error.</p>
 <pre class="r"><code># PARTITION DATA INTO TRAINING and TESTING ####
 set.seed(77777)
@@ -116,8 +123,8 @@ training &lt;- pml.dat[i.train.test,include.field]
 testing &lt;- pml.dat[-i.train.test,include.field]</code></pre>
 <p>The <strong>training</strong> data frame consists of 15699 rows. The <strong>testing</strong> data frame consists of 3923 rows.</p>
 </div>
-<div id="model-selection" class="section level2">
-<h2><span class="header-section-number">2.3</span> Model Selection</h2>
+<div id="training-and-model-selection" class="section level2">
+<h2><span class="header-section-number">2.4</span> Training and Model Selection</h2>
 <p>To predict the correct activity we explored the use of different classification models with built in feature selections. We then examined their accuracy.</p>
 <ul>
 <li>rt - 99.85% Accuracy with mtry=2 and 99.93% with mtry=27 for the OOS Error</li>
@@ -172,8 +179,18 @@ rf.mod &lt;- train(x=training[,-dim(training)[2]] , y=as.factor(training$classe)
 <pre class="r"><code># SAVE rf.mod TRAINING OBJECT
 save( rf.mod , file=&quot;rf_mod_training&quot;)</code></pre>
 </div>
+<div id="final-trained-model" class="section level2">
+<h2><span class="header-section-number">2.5</span> Final Trained Model</h2>
+<p>The final trained <strong>rf</strong> model confusion matrix is summarized below.</p>
+<pre><code>##      A    B    C    D    E  class.error
+## A 3905    0    1    0    0 0.0002560164
+## B   14 2640    4    0    0 0.0067720090
+## C    0   22 2371    3    0 0.0104340568
+## D    0    0   44 2206    2 0.0204262877
+## E    0    0    0    6 2519 0.0023762376</code></pre>
+</div>
 <div id="estimated-out-of-sample-error" class="section level2">
-<h2><span class="header-section-number">2.4</span> Estimated Out Of Sample Error</h2>
+<h2><span class="header-section-number">2.6</span> Estimated Out Of Sample Error</h2>
 <p>To get an estimate of the Out Of Sample Error, we used the <strong>testing</strong> data frame partitioned earlier.</p>
 <pre class="r"><code># RANDOM FOREST CONFUSION MATRIX
 (confusionMatrix( predict(rf.mod, testing) , testing$classe ))</code></pre>
@@ -210,7 +227,7 @@ save( rf.mod , file=&quot;rf_mod_training&quot;)</code></pre>
 ## Balanced Accuracy      0.9996   0.9987   1.0000   0.9992   0.9998</code></pre>
 </div>
 <div id="variable-importance" class="section level2">
-<h2><span class="header-section-number">2.5</span> Variable Importance</h2>
+<h2><span class="header-section-number">2.7</span> Variable Importance</h2>
 <p>As outlined earlier, the model also has built-in feature selection, which we extracted and plotted below.</p>
 <pre class="r"><code>plot(varImp(rf.mod, scale = FALSE))</code></pre>
 <div class="figure">

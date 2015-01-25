@@ -1,6 +1,6 @@
 ---
 title: "HAR Project"
-author: "Rick Sanqui"
+author: "PML Student"
 date: "Wednesday, January 21, 2015"
 output:
   html_document:
@@ -8,11 +8,21 @@ output:
     number_sections: yes
 ---
 
-# Overview
-This document outlines a methodology to use the Human Activity Recognition (HAR) data to predict one of six activities recorded by wearable accelerometers and shared in the "Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements" paper by Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. 
+# Introduction
+In recent years, with the use of consumer products such as _Jawbone Up_, _Nike FuelBand_, and _Fitbit_, it has become easier for entusiasts to collect large quantities of personal movement data.  However, data on the _quality of the movements_, how well excersices are performed, is rarely quantified.
+
+In this paper, we will use data collected from accelerometers on the belt, forearm, arm, and dumbell of six participants to predict the manner in which they performed barbell lift exercises (the __classe__ variable in the data set).  Participants in the experiment were asked to perform barbell lifts correctly and incorrectly in five different ways.  More information is available from http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+After the model was developed, it was used to predict on 20 activities.  The feature data used to predict the 20 activities was obtained from https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
 
 
 # Approach
+
+## Data
+The data used for this paper is the Human Activity Recognition (HAR) referenced in the "Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements" paper by Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. 
+
+The data was obtained from https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv 
+
 
 ## Data Preparation
 We removed identifiers for the experiment record, which did not add value to the classification problem.
@@ -57,7 +67,7 @@ The __training__ data frame consists of `r dim(training)[1]` rows.
 The __testing__ data frame consists of `r dim(testing)[1]` rows.
 
 
-## Model Selection
+## Training and Model Selection
 
 To predict the correct activity we explored the use of different classification models with built in feature selections.  We then examined their accuracy.
 
@@ -111,7 +121,13 @@ save( rf.mod , file="rf_mod_training")
 ```
 
 
+## Final Trained Model
 
+The final trained __rf__ model confusion matrix is summarized below.
+
+```{r model_info , echo=FALSE}
+rf.mod$finalModel$confusion
+```
 
 
 
