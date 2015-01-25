@@ -231,7 +231,6 @@ featurePlot(x=training[random.samples,as.vector(important[1:8,"feature"])] ,
             scales=list(x=list(relation="free"),
                         y=list(relation="free")),
             adjust=1.5,
-            pch="|",
             layout=c(2,4),
             auto.key = list(columns = 5)       
             )
