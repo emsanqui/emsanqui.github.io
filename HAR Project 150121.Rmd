@@ -192,13 +192,13 @@ plot(varImp(rf.mod, scale = FALSE))
 ```
 
 
-Below is a feature plot of 1,000 random observations from the __training__ data, for the top 7 features by importance.
+Below is a feature plot of 50 random observations from the __training__ data, for the top 7 features by importance.
 
 ```{r fig.height=10 , fig.width=10 }
 library(AppliedPredictiveModeling)
 transparentTheme(trans = .4)
 
-random.samples <- sample(rownames(training),size=1000,replace=FALSE)
+random.samples <- sample(rownames(training),size=50,replace=FALSE)
 featurePlot(x=training[random.samples,rownames(varImp(rf.mod, scale = FALSE)$importance)[1:7]] ,
             y=training[random.samples,"classe"] ,
             plot = "ellipse" ,
