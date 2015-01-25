@@ -197,7 +197,7 @@ save( rf.mod , file=&quot;rf_mod_training&quot;)</code></pre>
 <div id="final-trained-model-accuracy" class="section level2">
 <h2><span class="header-section-number">2.6</span> Final Trained Model Accuracy</h2>
 <p>The final trained <strong>rf</strong> model confusion matrix is summarized below.</p>
-<pre class="r"><code># TRAINING DATA CONFUSION MATRIX
+<pre class="r"><code># TRAINING SAMPLE CONFUSION MATRIX FOR TRAINING ERROR
 (confusionMatrix( predict(rf.mod, training) , training$classe ))</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
@@ -234,7 +234,7 @@ save( rf.mod , file=&quot;rf_mod_training&quot;)</code></pre>
 <div id="estimated-out-of-sample-error" class="section level2">
 <h2><span class="header-section-number">2.7</span> Estimated Out Of Sample Error</h2>
 <p>To get an estimate of the Out Of Sample Error, we used the <strong>testing</strong> data frame partitioned earlier. We use our trained model to predict the correct class and compare it to the actual class from the <strong>classe</strong> column.</p>
-<pre class="r"><code># OOS CONFUSION MATRIX
+<pre class="r"><code># TEST SAMPLE CONFUSION MATRIX (ESTIMATE OF OOS ERROR)
 (confusionMatrix( predict(rf.mod, testing) , testing$classe ))</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
@@ -267,6 +267,7 @@ save( rf.mod , file=&quot;rf_mod_training&quot;)</code></pre>
 ## Detection Rate         0.2845   0.1930   0.1744   0.1637   0.1838
 ## Detection Prevalence   0.2850   0.1930   0.1744   0.1637   0.1840
 ## Balanced Accuracy      0.9996   0.9987   1.0000   0.9992   0.9998</code></pre>
+<p>For this model, <strong>Accuracy</strong> of the test data was higher than that of the training data.</p>
 <p>Below we classified 10 random samples from the <strong>testing</strong> data using our trained model and compared the <strong>predicted classe</strong> values to their <strong>actual classe</strong> values.</p>
 <pre class="r"><code># PREDICT 10 RANDOM SAMPLES OF THE TESTING DATA
 random.samples &lt;- sample(rownames(testing),size=10,replace=FALSE) # Sample Observations

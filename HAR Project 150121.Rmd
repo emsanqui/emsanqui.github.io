@@ -159,7 +159,7 @@ save( rf.mod , file="rf_mod_training")
 The final trained __rf__ model confusion matrix is summarized below.
 
 ```{r model_confusion_matrix , message=FALSE}
-# TRAINING DATA CONFUSION MATRIX
+# TRAINING SAMPLE CONFUSION MATRIX FOR TRAINING ERROR
 (confusionMatrix( predict(rf.mod, training) , training$classe ))
 ```
 
@@ -168,10 +168,10 @@ The final trained __rf__ model confusion matrix is summarized below.
 ## Estimated Out Of Sample Error
 To get an estimate of the Out Of Sample Error, we used the __testing__ data frame partitioned earlier.  We use our trained model to predict the correct class and compare it to the actual class from the __classe__ column.
 ```{r OOS_confusion_matrix , message=FALSE}
-# OOS CONFUSION MATRIX
+# TEST SAMPLE CONFUSION MATRIX (ESTIMATE OF OOS ERROR)
 (confusionMatrix( predict(rf.mod, testing) , testing$classe ))
 ```
-
+For this model, __Accuracy__ of the test data was higher than that of the training data.
 
 Below we classified 10 random samples from the __testing__ data using our trained model and compared the __predicted classe__ values to their __actual classe__ values.
 ```{r}
