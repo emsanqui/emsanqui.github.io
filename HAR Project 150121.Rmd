@@ -200,15 +200,32 @@ transparentTheme(trans = .4)
 
 random.samples <- sample(rownames(training),size=50,replace=FALSE)
 
-featurePlot(x=training[random.samples,rownames(varImp(rf.mod, scale = FALSE)$importance)[1:8]] ,
+important <- data.frame(
+    feature=rownames(varImp(rf.mod, scale = FALSE)$importance) ,
+    varImp(rf.mod, scale = FALSE)$importance
+    )
+important <- important[order(important$Overall , decreasing=T),]
+
+featurePlot(x=training[random.samples,as.vector(important[1:8,"feature"])] ,
             y=training[random.samples,"classe"] ,
             plot = "ellipse" ,
             auto.key = list(columns = 5)
             )
 
-featurePlot(x=training[random.samples,rownames(varImp(rf.mod, scale = FALSE)$importance)[1:8]] ,
+featurePlot(x=training[random.samples,as.vector(important[1:8,"feature"])] ,
             y=training[random.samples,"classe"] ,
             plot = "density" ,
+            scales=list(x=list(relation="free"),
+                        y=list(relation="free")),
+            adjust=1.5,
+            pch="|",
+            layout=c(2,4),
+            auto.key = list(columns = 5)       
+            )
+
+featurePlot(x=training[random.samples,as.vector(important[1:8,"feature"])] ,
+            y=training[random.samples,"classe"] ,
+            plot = "box" ,
             scales=list(x=list(relation="free"),
                         y=list(relation="free")),
             adjust=1.5,
