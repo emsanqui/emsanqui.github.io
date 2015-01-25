@@ -304,9 +304,17 @@ important &lt;- data.frame(
     feature=rownames(varImp(rf.mod, scale = FALSE)$importance) ,
     varImp(rf.mod, scale = FALSE)$importance
     )
-important &lt;- important[order(important$Overall , decreasing=T),]
-
-featurePlot(x=training[random.samples,as.vector(important[1:8,&quot;feature&quot;])] ,
+head(important &lt;- important[order(important$Overall , decreasing=T),] , 8)</code></pre>
+<pre><code>##                             feature  Overall
+## roll_belt                 roll_belt 525.0369
+## yaw_belt                   yaw_belt 432.2016
+## magnet_dumbbell_z magnet_dumbbell_z 379.2310
+## magnet_dumbbell_y magnet_dumbbell_y 356.2896
+## pitch_belt               pitch_belt 353.9717
+## pitch_forearm         pitch_forearm 342.5646
+## magnet_dumbbell_x magnet_dumbbell_x 305.8481
+## roll_forearm           roll_forearm 300.8780</code></pre>
+<pre class="r"><code>featurePlot(x=training[random.samples,as.vector(important[1:8,&quot;feature&quot;])] ,
             y=training[random.samples,&quot;classe&quot;] ,
             plot = &quot;ellipse&quot; ,
             auto.key = list(columns = 5)

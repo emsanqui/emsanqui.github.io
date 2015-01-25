@@ -194,7 +194,7 @@ plot(varImp(rf.mod, scale = FALSE))
 
 Below are two feature plots of 50 random observations from the __training__ data, for the top 8 features by importance.
 
-```{r fig.height=10 , fig.width=10 }
+```{r }
 library(AppliedPredictiveModeling)
 transparentTheme(trans = .4)
 
@@ -204,8 +204,10 @@ important <- data.frame(
     feature=rownames(varImp(rf.mod, scale = FALSE)$importance) ,
     varImp(rf.mod, scale = FALSE)$importance
     )
-important <- important[order(important$Overall , decreasing=T),]
+head(important <- important[order(important$Overall , decreasing=T),] , 8)
+```
 
+```{r fig.height=10 , fig.width=10 }
 featurePlot(x=training[random.samples,as.vector(important[1:8,"feature"])] ,
             y=training[random.samples,"classe"] ,
             plot = "ellipse" ,
