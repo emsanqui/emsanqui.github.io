@@ -269,20 +269,22 @@ save( rf.mod , file=&quot;rf_mod_training&quot;)</code></pre>
 ## Balanced Accuracy      0.9996   0.9987   1.0000   0.9992   0.9998</code></pre>
 <p>Below we classified 10 random samples from the <strong>testing</strong> data using our trained model and compared the <strong>predicted classe</strong> values to their <strong>actual classe</strong> values.</p>
 <pre class="r"><code># PREDICT 10 RANDOM SAMPLES OF THE TESTING DATA
-random.samples &lt;- sample(rownames(testing),size=10,replace=FALSE)
-data.frame( Predicted=predict(rf.mod , testing[random.samples,include.field[1:52]] ) ,
-            Actual=testing[random.samples,&quot;classe&quot;])</code></pre>
-<pre><code>##    Predicted Actual
-## 1          E      E
-## 2          A      A
-## 3          E      E
-## 4          A      A
-## 5          D      D
-## 6          E      E
-## 7          A      A
-## 8          D      D
-## 9          E      E
-## 10         C      C</code></pre>
+random.samples &lt;- sample(rownames(testing),size=10,replace=FALSE) # Sample Observations
+data.frame( pml.dat[random.samples , c(2,6,7)],
+            Actual=pml.dat[random.samples,&quot;classe&quot;] ,
+            Predicted=predict( rf.mod , testing[random.samples,include.field[1:52]] )
+            )</code></pre>
+<pre><code>##       user_name new_window num_window Actual Predicted
+## 17092   charles         no        155      E         E
+## 3526     jeremy         no        417      A         A
+## 17067   charles         no        154      E         E
+## 3118   carlitos         no        343      A         A
+## 14314  carlitos        yes        394      D         D
+## 16563  carlitos         no         39      E         E
+## 1118     adelmo         no        194      A         A
+## 14402    jeremy         no        480      D         D
+## 16077    adelmo         no          4      E         E
+## 12275   charles         no        728      C         C</code></pre>
 </div>
 <div id="variable-importance" class="section level2">
 <h2><span class="header-section-number">2.8</span> Variable Importance</h2>

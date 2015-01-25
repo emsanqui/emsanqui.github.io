@@ -176,9 +176,11 @@ To get an estimate of the Out Of Sample Error, we used the __testing__ data fram
 Below we classified 10 random samples from the __testing__ data using our trained model and compared the __predicted classe__ values to their __actual classe__ values.
 ```{r}
 # PREDICT 10 RANDOM SAMPLES OF THE TESTING DATA
-random.samples <- sample(rownames(testing),size=10,replace=FALSE)
-data.frame( Predicted=predict(rf.mod , testing[random.samples,include.field[1:52]] ) ,
-            Actual=testing[random.samples,"classe"])
+random.samples <- sample(rownames(testing),size=10,replace=FALSE) # Sample Observations
+data.frame( pml.dat[random.samples , c(2,6,7)],
+            Actual=pml.dat[random.samples,"classe"] ,
+            Predicted=predict( rf.mod , testing[random.samples,include.field[1:52]] )
+            )
 ```
 
 
