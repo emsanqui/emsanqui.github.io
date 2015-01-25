@@ -79,20 +79,27 @@ img {
 <h2><span class="header-section-number">2.1</span> Data</h2>
 <p>The data used for this paper is the Human Activity Recognition (HAR) referenced in the “Wearable Computing: Accelerometers’ Data Classification of Body Postures and Movements” paper by Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H.</p>
 <p>The data was obtained from <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a></p>
+<pre class="r"><code>pml.dat &lt;- read.csv(&quot;./Data/pml-training.csv&quot;)</code></pre>
 </div>
 <div id="data-preparation" class="section level2">
 <h2><span class="header-section-number">2.2</span> Data Preparation</h2>
 <p>We removed identifiers for the experiment record, which did not add value to the classification problem.</p>
+<pre class="r"><code>non.movement.columns &lt;- c(1:7) ; names(pml.dat[non.movement.columns])</code></pre>
 <pre><code>## [1] &quot;X&quot;                    &quot;user_name&quot;            &quot;raw_timestamp_part_1&quot;
 ## [4] &quot;raw_timestamp_part_2&quot; &quot;cvtd_timestamp&quot;       &quot;new_window&quot;          
 ## [7] &quot;num_window&quot;</code></pre>
 <p>In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA’s) were removed, as imputing them would add no value.</p>
 <pre class="r"><code># GET LIST OF COLUMNS IN pml-training.csv EXCLUDING COLUMNS WITH &gt;19000 NA VALUES AND SPACES
 trim &lt;- function (x) gsub(&quot;^\\s+|\\s+$&quot;, &quot;&quot;, x)
-pml.dat.summary &lt;- data.frame(summary(pml.dat))
-exclude.columns &lt;- rbind( subset(pml.dat.summary , grepl(&quot;^:19([0-9]{3,})&quot;,trim(pml.dat.summary$Freq) ) , select=&quot;Var2&quot;) ,
-                          subset(pml.dat.summary , grepl(&quot;^NA's   :19([0-9]{3,})&quot;,trim(pml.dat.summary$Freq) ) , select=&quot;Var2&quot;) )
-(include.field &lt;- names(pml.dat[,-c(exclude.columns$Var2,1:7)]))</code></pre>
+pml.dat.summary &lt;- data.frame(summary(pml.dat))  # function to trim leading &amp; trailing blanks 
+exclude.columns &lt;- rbind( subset(pml.dat.summary , 
+                                 grepl(&quot;^:19([0-9]{3,})&quot;,trim(pml.dat.summary$Freq) ) , 
+                                 select=&quot;Var2&quot;) ,
+                          subset(pml.dat.summary , 
+                                 grepl(&quot;^NA's   :19([0-9]{3,})&quot;,trim(pml.dat.summary$Freq) ) , 
+                                 select=&quot;Var2&quot;) )
+include.field &lt;- names(pml.dat[,-c(exclude.columns$Var2 , non.movement.columns)])</code></pre>
+<p>After eliminating these columns we ended up with a data frame of 19622 samples and the following 53 columns.</p>
 <pre><code>##  [1] &quot;roll_belt&quot;            &quot;pitch_belt&quot;           &quot;yaw_belt&quot;            
 ##  [4] &quot;total_accel_belt&quot;     &quot;gyros_belt_x&quot;         &quot;gyros_belt_y&quot;        
 ##  [7] &quot;gyros_belt_z&quot;         &quot;accel_belt_x&quot;         &quot;accel_belt_y&quot;        
@@ -111,23 +118,22 @@ exclude.columns &lt;- rbind( subset(pml.dat.summary , grepl(&quot;^:19([0-9]{3,}
 ## [46] &quot;gyros_forearm_z&quot;      &quot;accel_forearm_x&quot;      &quot;accel_forearm_y&quot;     
 ## [49] &quot;accel_forearm_z&quot;      &quot;magnet_forearm_x&quot;     &quot;magnet_forearm_y&quot;    
 ## [52] &quot;magnet_forearm_z&quot;     &quot;classe&quot;</code></pre>
-<p>After eliminating these columns we ended up with a data frame of 160 columns and 19622 rows.</p>
 </div>
 <div id="partitioning-the-har-data" class="section level2">
 <h2><span class="header-section-number">2.3</span> Partitioning the HAR Data</h2>
-<p>We partitioned the data into <strong>training</strong> and <strong>testing</strong> data frames. The model was selected using the <strong>training</strong> data and we used the <strong>testing</strong> data to estimate the Out Of Sample (OOS) Error.</p>
+<p>We partitioned the data into <strong>training</strong> and <strong>testing</strong> data frames.</p>
 <pre class="r"><code># PARTITION DATA INTO TRAINING and TESTING ####
 set.seed(77777)
 i.train.test &lt;- createDataPartition(pml.dat$classe , p=0.8 , list=FALSE)
 training &lt;- pml.dat[i.train.test,include.field]
 testing &lt;- pml.dat[-i.train.test,include.field]</code></pre>
-<p>The <strong>training</strong> data frame consists of 15699 rows. The <strong>testing</strong> data frame consists of 3923 rows.</p>
+<p>The <strong>training</strong> data frame was used to build our model. It consists of 15699 rows. The <strong>testing</strong> data frame was used to estimate our out of sample error. It consists of 3923 rows.</p>
 </div>
-<div id="training-and-model-selection" class="section level2">
-<h2><span class="header-section-number">2.4</span> Training and Model Selection</h2>
-<p>To predict the correct activity we explored the use of different classification models with built in feature selections. We then examined their accuracy.</p>
+<div id="model-training-and-selection" class="section level2">
+<h2><span class="header-section-number">2.4</span> Model Training and Selection</h2>
+<p>To predict the correct activity, we explored the use of different classification models with built in feature selections. We then examined their accuracy on our out of sample data frame, <strong>testing</strong>.</p>
 <ul>
-<li>rt - 99.85% Accuracy with mtry=2 and 99.93% with mtry=27 for the OOS Error</li>
+<li>rt - 99.92% Accuracy with mtry=2 and 98.87% with mtry=27 for the OOS Error</li>
 <li>knn - 95% Accuracy with k=5 for the OOS Error</li>
 <li>rpart - 50.38% Accuracy for the OOS Error</li>
 <li>AdaBoost - 28.26% Accuracy for the OOS Error</li>

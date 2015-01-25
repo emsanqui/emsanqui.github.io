@@ -8,6 +8,15 @@ output:
     number_sections: yes
 ---
 
+```{r echo=FALSE , message=FALSE}
+library(caret)
+library(nnet)
+load("rf_mod_training_150120")
+```
+
+
+
+
 # Introduction
 In recent years, with the use of consumer products such as _Jawbone Up_, _Nike FuelBand_, and _Fitbit_, it has become easier for entusiasts to collect large quantities of personal movement data.  However, data on the _quality of the movements_, how well excersices are performed, is rarely quantified.
 
@@ -16,44 +25,60 @@ In this paper, we will use data collected from accelerometers on the belt, forea
 After the model was developed, it was used to predict on 20 activities.  The feature data used to predict the 20 activities was obtained from https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
 
 
+
+
 # Approach
+
+
+
 
 ## Data
 The data used for this paper is the Human Activity Recognition (HAR) referenced in the "Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements" paper by Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. 
 
 The data was obtained from https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv 
 
+```{r load_data}
+pml.dat <- read.csv("./Data/pml-training.csv")
+```
+
+
+
 
 ## Data Preparation
 We removed identifiers for the experiment record, which did not add value to the classification problem.
 
-```{r echo=FALSE , message=FALSE}
-library(caret)
-library(nnet)
+```{r non_movement_cols_to_remove}
+non.movement.columns <- c(1:7) ; names(pml.dat[non.movement.columns])
 ```
 
-```{r echo=FALSE}
-#setwd("./Project")
-pml.dat <- read.csv("./Data/pml-training.csv")
-(remove.columns <- names(pml.dat[1:7]))
-```
 
 In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA's) were removed, as imputing them would add no value.
 
-```{r}
+```{r missing_data_cols_to_remove}
 # GET LIST OF COLUMNS IN pml-training.csv EXCLUDING COLUMNS WITH >19000 NA VALUES AND SPACES
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
-pml.dat.summary <- data.frame(summary(pml.dat))
-exclude.columns <- rbind( subset(pml.dat.summary , grepl("^:19([0-9]{3,})",trim(pml.dat.summary$Freq) ) , select="Var2") ,
-                          subset(pml.dat.summary , grepl("^NA's   :19([0-9]{3,})",trim(pml.dat.summary$Freq) ) , select="Var2") )
-(include.field <- names(pml.dat[,-c(exclude.columns$Var2,1:7)]))
+pml.dat.summary <- data.frame(summary(pml.dat))  # function to trim leading & trailing blanks 
+exclude.columns <- rbind( subset(pml.dat.summary , 
+                                 grepl("^:19([0-9]{3,})",trim(pml.dat.summary$Freq) ) , 
+                                 select="Var2") ,
+                          subset(pml.dat.summary , 
+                                 grepl("^NA's   :19([0-9]{3,})",trim(pml.dat.summary$Freq) ) , 
+                                 select="Var2") )
+include.field <- names(pml.dat[,-c(exclude.columns$Var2 , non.movement.columns)])
 ```
 
-After eliminating these columns we ended up with a data frame of `r dim(pml.dat)[2]` columns and `r dim(pml.dat)[1]` rows.
+
+After eliminating these columns we ended up with a data frame of `r dim(pml.dat)[1]` samples and the following `r length(include.field)` columns.
+
+```{r print_cols_to_use , echo=FALSE}
+include.field
+```
+
+
 
 
 ## Partitioning the HAR Data
-We partitioned the data into __training__ and __testing__ data frames.  The model was selected using the __training__ data and we used the __testing__ data to estimate the Out Of Sample (OOS) Error. 
+We partitioned the data into __training__ and __testing__ data frames.
 
 ```{r}
 # PARTITION DATA INTO TRAINING and TESTING ####
@@ -63,15 +88,17 @@ training <- pml.dat[i.train.test,include.field]
 testing <- pml.dat[-i.train.test,include.field]
 ```
 
-The __training__ data frame consists of `r dim(training)[1]` rows.
-The __testing__ data frame consists of `r dim(testing)[1]` rows.
+The __training__ data frame was used to build our model. It consists of `r dim(training)[1]` rows.
+The __testing__ data frame was used to estimate our out of sample error. It consists of `r dim(testing)[1]` rows.
 
 
-## Training and Model Selection
 
-To predict the correct activity we explored the use of different classification models with built in feature selections.  We then examined their accuracy.
 
-* rt - 99.85% Accuracy with mtry=2 and 99.93% with mtry=27 for the OOS Error
+## Model Training and Selection
+
+To predict the correct activity, we explored the use of different classification models with built in feature selections.  We then examined their accuracy on our out of sample data frame, __testing__.
+
+* rt - 99.92% Accuracy with mtry=2 and 98.87% with mtry=27 for the OOS Error
 * knn - 95% Accuracy with k=5 for the OOS Error
 * rpart - 50.38% Accuracy for the OOS Error
 * AdaBoost - 28.26% Accuracy for the OOS Error
@@ -103,7 +130,7 @@ rf.mod <- train(x=training[,-dim(training)[2]] , y=as.factor(training$classe) ,
 
 ```{r echo=FALSE , message=FALSE}
 # LOAD THE SAVED MODEL
-load("rf_mod_training_150120")
+#load("rf_mod_training_150120")
 ```
 
 ```{r echo=FALSE , fig.width=10 , fig.height=5}
