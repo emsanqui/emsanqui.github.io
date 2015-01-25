@@ -1,5 +1,5 @@
 ---
-title: "HAR Project"
+title: "Human Activity Recognition (HAR) using a Random Forest Classifier"
 author: "PML Student"
 date: "Wednesday, January 21, 2015"
 output:
