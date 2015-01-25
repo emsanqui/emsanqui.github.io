@@ -10,7 +10,6 @@ output:
 
 ```{r echo=FALSE , message=FALSE}
 library(caret)
-library(nnet)
 load("rf_mod_training_150120")
 ```
 
@@ -35,16 +34,17 @@ After the model was developed, it was used to predict on 20 activities.  The fea
 ## Data
 The data used for this paper is the Human Activity Recognition (HAR) referenced in the "Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements" paper by Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. 
 
-The data was obtained from https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv 
+The data was obtained from https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv and loaded in R to build our classification model.
 
 ```{r load_data}
+#setwd("./Project")
 pml.dat <- read.csv("./Data/pml-training.csv")
 ```
 
 
 
 
-## Data Preparation
+## Data Cleaning and Preparation 
 We removed identifiers for the experiment record, which did not add value to the classification problem.
 
 ```{r non_movement_cols_to_remove}
@@ -52,7 +52,7 @@ non.movement.columns <- c(1:7) ; names(pml.dat[non.movement.columns])
 ```
 
 
-In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA's) were removed, as imputing them would add no value.
+In addition, features that are missing more than 19000 out of the 19622 measurements (as blanks or NA's) were removed, as imputing them would add no value to building our model.
 
 ```{r missing_data_cols_to_remove}
 # GET LIST OF COLUMNS IN pml-training.csv EXCLUDING COLUMNS WITH >19000 NA VALUES AND SPACES
@@ -88,23 +88,32 @@ training <- pml.dat[i.train.test,include.field]
 testing <- pml.dat[-i.train.test,include.field]
 ```
 
-The __training__ data frame was used to build our model. It consists of `r dim(training)[1]` rows.
+The __training__ data frame was used to build our model. It consists of `r dim(training)[1]` rows.  
 The __testing__ data frame was used to estimate our out of sample error. It consists of `r dim(testing)[1]` rows.
 
 
 
 
-## Model Training and Selection
+## Building the Model
 
-To predict the correct activity, we explored the use of different classification models with built in feature selections.  We then examined their accuracy on our out of sample data frame, __testing__.
+To predict the correct activity, we explored the use of different classification models with built in feature selections.  We then examined their accuracy against our out of sample data frame, __testing__.
 
 * rt - 99.92% Accuracy with mtry=2 and 98.87% with mtry=27 for the OOS Error
 * knn - 95% Accuracy with k=5 for the OOS Error
 * rpart - 50.38% Accuracy for the OOS Error
 * AdaBoost - 28.26% Accuracy for the OOS Error
 
-Out of the tested models the Random Forest (__rf__) model returned the highest accuracy.  
-The __rf__ model was trained using a 10-fold cross-validation, which was repeated 10 times.  
+Out of the tested models the Random Forest (__rf__) model returned the highest accuracy.
+
+## Model Training 
+ 
+The __rf__ model was trained using a 10-fold cross-validation, which was repeated 10 times. The __train__ function in the __caret__ R package was used to control our cross-validation strategy.  The __trControl__ parameter of the __train__ function provided us with finer control over our model training.  
+
+With the __p__ parameter of __0.7__, 70% of the `r dim(training)[1]` records of the __training__ data were selected at random.  
+
+These sample was then split into 10 sub-samples, or 10-fold, by the value of __number__ parameter.  A model was fit on 9 of the 10 samples.  This process was repeated for each of the 10 folds and then aggregated by the __train__ function.
+
+This process was repeated 10 times as controled by the __repeat__ parameter value of __10__.
 
 ```{r , eval=FALSE}
 # FIT Random Forest ####
@@ -128,10 +137,7 @@ rf.mod <- train(x=training[,-dim(training)[2]] , y=as.factor(training$classe) ,
 )
 ```
 
-```{r echo=FALSE , message=FALSE}
-# LOAD THE SAVED MODEL
-#load("rf_mod_training_150120")
-```
+In addition, the random forest model was tried for trees built on different number of columns controled by the _mtry_ parameter of the __rf__ model.  The __train__ used the calculated __Accuracy__ to select the best model, for our model, an __mtry__ value of __`r rf.mod$finalModel$mtry`__.
 
 ```{r echo=FALSE , fig.width=10 , fig.height=5}
 rf.mod
@@ -141,34 +147,60 @@ plot(rf.mod)
 ```
 
 
-Due to the amount of time it takes to train the model, we also save the trained __rf__ model. We are able to load it later using the __load()__ command.
+Due to the amount of time it took to train the model, we also saved the trained __rf__ model. We are able to load it later using the __load()__ R command.
 ```{r eval=FALSE}
 # SAVE rf.mod TRAINING OBJECT
 save( rf.mod , file="rf_mod_training")
 ```
 
 
-## Final Trained Model
+## Final Trained Model Accuracy
 
 The final trained __rf__ model confusion matrix is summarized below.
 
-```{r model_info , echo=FALSE}
-rf.mod$finalModel$confusion
+```{r model_confusion_matrix , message=FALSE}
+# TRAINING DATA CONFUSION MATRIX
+(confusionMatrix( predict(rf.mod, training) , training$classe ))
 ```
 
 
 
 ## Estimated Out Of Sample Error
-To get an estimate of the Out Of Sample Error, we used the __testing__ data frame partitioned earlier.
-```{r message=FALSE}
-# RANDOM FOREST CONFUSION MATRIX
+To get an estimate of the Out Of Sample Error, we used the __testing__ data frame partitioned earlier.  We use our trained model to predict the correct class and compare it to the actual class from the __classe__ column.
+```{r OOS_confusion_matrix , message=FALSE}
+# OOS CONFUSION MATRIX
 (confusionMatrix( predict(rf.mod, testing) , testing$classe ))
 ```
 
 
+Below we classified 10 random samples from the __testing__ data using our trained model and compared the __predicted classe__ values to their __actual classe__ values.
+```{r}
+# PREDICT 10 RANDOM SAMPLES OF THE TESTING DATA
+random.samples <- sample(rownames(testing),size=10,replace=FALSE)
+data.frame( Predicted=predict(rf.mod , testing[random.samples,include.field[1:52]] ) ,
+            Actual=testing[random.samples,"classe"])
+```
+
+
+
 ## Variable Importance
-As outlined earlier, the model also has built-in feature selection, which we extracted and plotted below.
+As outlined earlier, the model also has built-in feature selection.  Below we summarize each feature's importance in our final model.
 ```{r fig.height=10 , fig.width=10 }
 plot(varImp(rf.mod, scale = FALSE))
+```
+
+
+Below is a feature plot of 1,000 random observations from the __training__ data, for the top 7 features by importance.
+
+```{r fig.height=10 , fig.width=10 }
+library(AppliedPredictiveModeling)
+transparentTheme(trans = .4)
+
+random.samples <- sample(rownames(training),size=1000,replace=FALSE)
+featurePlot(x=training[random.samples,rownames(varImp(rf.mod, scale = FALSE)$importance)[1:7]] ,
+            y=training[random.samples,"classe"] ,
+            plot = "ellipse" ,
+            auto.key = list(column = 5)
+            )
 ```
 
