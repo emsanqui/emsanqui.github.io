@@ -192,17 +192,29 @@ plot(varImp(rf.mod, scale = FALSE))
 ```
 
 
-Below is a feature plot of 50 random observations from the __training__ data, for the top 7 features by importance.
+Below are two feature plots of 50 random observations from the __training__ data, for the top 8 features by importance.
 
 ```{r fig.height=10 , fig.width=10 }
 library(AppliedPredictiveModeling)
 transparentTheme(trans = .4)
 
 random.samples <- sample(rownames(training),size=50,replace=FALSE)
-featurePlot(x=training[random.samples,rownames(varImp(rf.mod, scale = FALSE)$importance)[1:7]] ,
+
+featurePlot(x=training[random.samples,rownames(varImp(rf.mod, scale = FALSE)$importance)[1:8]] ,
             y=training[random.samples,"classe"] ,
             plot = "ellipse" ,
-            auto.key = list(column = 5)
+            auto.key = list(columns = 5)
+            )
+
+featurePlot(x=training[random.samples,rownames(varImp(rf.mod, scale = FALSE)$importance)[1:8]] ,
+            y=training[random.samples,"classe"] ,
+            plot = "density" ,
+            scales=list(x=list(relation="free"),
+                        y=list(relation="free")),
+            adjust=1.5,
+            pch="|",
+            layout=c(2,4),
+            auto.key = list(columns = 5)       
             )
 ```
 
